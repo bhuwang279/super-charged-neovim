@@ -7,47 +7,6 @@ return {
 		{ "folke/neodev.nvim", opts = {} },
 	},
 	config = function()
-		vim.diagnostic.config({
-			virtual_text = {
-				prefix = "■",
-				spacing = 4,
-				format = function(diagnostic)
-					local max_len = 50 -- Characters to show inline
-					if #diagnostic.message > max_len then
-						return string.sub(diagnostic.message, 1, max_len) .. "..."
-					end
-					return diagnostic.message
-				end,
-			},
-			float = {
-				wrap = true,
-				max_width = 80, -- Fixed number instead of function
-				border = "rounded",
-				source = "always",
-				format = function(diagnostic)
-					return string.format(
-						"%s (%s) [%s]",
-						diagnostic.message,
-						diagnostic.source,
-						diagnostic.code or diagnostic.user_data.lsp.code
-					)
-				end,
-			},
-			signs = true,
-			underline = true,
-			update_in_insert = false,
-			severity_sort = true,
-		})
-
-		-- Keymap to show full diagnostic in float
-		vim.keymap.set("n", "<leader>e", function()
-			vim.diagnostic.open_float({
-				focusable = false,
-				close_events = { "CursorMoved", "BufHidden", "InsertCharPre" },
-				-- You can add width specification here if needed
-				width = 80,
-			})
-		end, { desc = "Show full diagnostic message" })
 		-- import lspconfig plugin
 		local lspconfig = require("lspconfig")
 
@@ -60,16 +19,14 @@ return {
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
 
 		local keymap = vim.keymap -- for conciseness
-		require("lspconfig").protols.setup({
-			capabilities = require("cmp_nvim_lsp").default_capabilities(),
-			on_attach = function(client, bufnr)
-				-- Your on_attach configuration here
+		vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+			pattern = "*.mdx",
+			callback = function()
+				vim.bo.filetype = "mdx"
 			end,
-			filetypes = { "proto" },
-			root_dir = require("lspconfig.util").root_pattern("buf.yaml", "buf.work.yaml", ".git"),
-			cmd = { "protols" }, -- Ensure `protols` is in your $PATH
 		})
 		vim.api.nvim_create_autocmd("LspAttach", {
+
 			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 			callback = function(ev)
 				-- Buffer local mappings.
@@ -137,90 +94,111 @@ return {
 			}
 			vim.lsp.buf.execute_command(params)
 		end
+		--configure ts_ls server:
+		lspconfig["ts_ls"].setup({
+			capabilities = capabilities,
+			on_attach = function(client, bufnr)
+				-- Define your on_attach function here
+				local opts = { buffer = bufnr, silent = true, desc = "Organize Imports" }
+				vim.keymap.set("n", "<leader>oi", ":OrganizeImports<CR>", opts)
+			end,
+			commands = {
+				OrganizeImports = {
+					organize_imports,
+					description = "Organize Imports",
+				},
+			},
+		})
 
-		mason_lspconfig.setup_handlers({
-			-- default handler for installed servers
-			function(server_name)
-				lspconfig[server_name].setup({
-					capabilities = capabilities,
-				})
-			end,
-			["ts_ls"] = function()
-				--configure ts_ls server:
-				lspconfig["ts_ls"].setup({
-					capabilities = capabilities,
-					on_attach = function(client, bufnr)
-						-- Define your on_attach function here
-						local opts = { buffer = bufnr, silent = true, desc = "Organize Imports" }
-						vim.keymap.set("n", "<leader>oi", ":OrganizeImports<CR>", opts)
-					end,
-					commands = {
-						OrganizeImports = {
-							organize_imports,
-							description = "Organize Imports",
-						},
+		-- configure graphql language server
+		lspconfig["graphql"].setup({
+			capabilities = capabilities,
+			filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
+		})
+
+		--configure gopls server
+		lspconfig["gopls"].setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			cmd = { "gopls" },
+			filetype = { "go", "gomod", "gowork", "gotmpl" },
+			root_dir = util.root_pattern("go.work", "go.mod", ".git"),
+			settings = {
+				gopls = {
+					completeUnimported = true,
+					usePlaceholders = true,
+					analyses = {
+						unusedparams = true,
 					},
-				})
-			end,
-			["graphql"] = function()
-				-- configure graphql language server
-				lspconfig["graphql"].setup({
-					capabilities = capabilities,
-					filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
-				})
-			end,
-			["emmet_ls"] = function()
-				-- configure emmet language server
-				lspconfig["emmet_ls"].setup({
-					capabilities = capabilities,
-					filetypes = {
-						"html",
-						"typescriptreact",
-						"javascriptreact",
-						"css",
-						"sass",
-						"scss",
-						"less",
-						"svelte",
+				},
+			},
+		})
+
+		-- configure emmet language server
+		lspconfig["emmet_ls"].setup({
+			capabilities = capabilities,
+			filetypes = {
+				"html",
+				"typescriptreact",
+				"javascriptreact",
+				"css",
+				"sass",
+				"scss",
+				"less",
+				"svelte",
+			},
+		})
+
+		--configure gopls server
+		lspconfig["gopls"].setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			cmd = { "gopls" },
+			filetype = { "go", "gomod", "gowork", "gotmpl" },
+			root_dir = util.root_pattern("go.work", "go.mod", ".git"),
+			settings = {
+				gopls = {
+					completeUnimported = true,
+					usePlaceholders = true,
+					analyses = {
+						unusedparams = true,
 					},
-				})
-			end,
-			["gopls"] = function()
-				--configure gopls server
-				lspconfig["gopls"].setup({
-					capabilities = capabilities,
-					on_attach = on_attach,
-					cmd = { "gopls" },
-					filetype = { "go", "gomod", "gowork", "gotmpl" },
-					root_dir = util.root_pattern("go.work", "go.mod", ".git"),
-					settings = {
-						gopls = {
-							completeUnimported = true,
-							usePlaceholders = true,
-							analyses = {
-								unusedparams = true,
-							},
-						},
+				},
+			},
+		})
+
+		-- configure lua server (with special settings)
+		lspconfig["lua_ls"].setup({
+			capabilities = capabilities,
+			settings = {
+				Lua = {
+					-- make the language server recognize "vim" global
+					diagnostics = {
+						globals = { "vim" },
 					},
-				})
-			end,
-			["lua_ls"] = function()
-				-- configure lua server (with special settings)
-				lspconfig["lua_ls"].setup({
-					capabilities = capabilities,
-					settings = {
-						Lua = {
-							-- make the language server recognize "vim" global
-							diagnostics = {
-								globals = { "vim" },
-							},
-							completion = {
-								callSnippet = "Replace",
-							},
-						},
+					completion = {
+						callSnippet = "Replace",
 					},
-				})
+				},
+			},
+		})
+
+		--configur protols
+		lspconfig.protols.setup({
+			capabilities = require("cmp_nvim_lsp").default_capabilities(),
+			on_attach = function(client, bufnr)
+				-- Your on_attach configuration here
 			end,
+			filetypes = { "proto" },
+			root_dir = require("lspconfig.util").root_pattern("buf.yaml", "buf.work.yaml", ".git"),
+			cmd = { "protols" }, -- Ensure `protols` is in your $PATH
+		})
+
+		--configure marksman
+		lspconfig.marksman.setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			filetypes = { "markdown", "md", "mdx", "markdown_inline" },
 		})
 	end,
 }
