@@ -16,6 +16,12 @@ return {
 				cterm_color = "173",
 				name = "Proto",
 			},
+			yaml = {
+				icon = "", -- Choose a Nerd Font icon you like
+				color = "#FFB86C",
+				cterm_color = "173",
+				name = "Yaml",
+			},
 		})
 		nvimtree.setup({
 			update_focused_file = {
