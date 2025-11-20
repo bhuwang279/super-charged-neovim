@@ -6,12 +6,12 @@ return {
 
 		conform.setup({
 			formatters_by_ft = {
-				javascript = { "prettierd", "eslint_d", stop_after_first = true },
-				javascriptreact = { "prettierd", "eslint_d", stop_after_first = true },
-				typescript = { "prettierd", "eslint_d", stop_after_first = true },
-				typescriptreact = { "prettierd", "eslint_d", stop_after_first = false },
-				markdown = { "prettierd", "eslint_d", stop_after_first = false },
-				mdx = { "prettierd", "eslint_d", stop_after_first = false },
+				javascript = { "eslint_d", "prettierd" },
+				javascriptreact = { "eslint_d", "prettierd" },
+				typescript = { "eslint_d", "prettierd" },
+				typescriptreact = { "eslint_d", "prettierd" },
+				markdown = { "eslint_d", "prettierd" },
+				mdx = { "eslint_d", "prettierd" },
 				svelte = { "prettierd" },
 				css = { "prettierd" },
 				html = { "prettierd" },
